@@ -28,3 +28,13 @@ export async function prepare(page, { blocked } = {}) {
   });
   return errors;
 }
+
+/** Attend la fin des animations d'entrée (hors boucles infinies et animations liées au défilement). */
+export async function settle(page) {
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .filter((a) => a.timeline === document.timeline && a.effect?.getTiming().iterations !== Infinity)
+      .every((a) => a.playState !== "running")
+  );
+}

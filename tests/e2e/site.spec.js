@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { prepare } from "./helpers";
+import { prepare, settle } from "./helpers";
 
 const isMobile = (p) => p.project.name === "mobile";
 
@@ -247,6 +247,7 @@ test.describe("Accessibilité (axe-core, WCAG 2.2 AA)", () => {
         await page.locator("#reserver").scrollIntoViewIfNeeded();
         await page.locator(".cal-month button.day").first().waitFor();
       }
+      await settle(page);
       const r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
       const summary = r.violations.map((v) => `${v.id} (${v.impact}) : ${v.nodes.map((n) => n.target.join(" ")).slice(0, 3).join(" | ")}`);
       expect(summary).toEqual([]);
