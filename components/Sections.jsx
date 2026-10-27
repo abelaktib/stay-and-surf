@@ -6,7 +6,7 @@ import { SITE } from "@/lib/config";
 export function HouseHead({ locale }) {
   const t = getDict(locale).house;
   return (
-    <section id="maison" style={{ scrollMarginTop: 60 }}>
+    <section id="maison">
       <div className="wrap house-head">
         <h2 className="h2">{t.title}</h2>
         <div>
@@ -153,29 +153,30 @@ export function Footer({ locale }) {
       <div className="wrap">
         <div className="footer-top">
           <div style={{ maxWidth: 320 }}>
-            <a href={`/${locale}`} className="brand" style={{ color: "var(--sand)" }}>
+            <a href={`/${locale}`} className="brand" style={{ color: "var(--sand)" }} translate="no">
               <Star />
               Stay &amp; Surf
             </a>
             <p style={{ opacity: 0.75 }}>{t.tagline}</p>
           </div>
           <div>
-            <h4>{SITE.house}</h4>
+            <h2 className="footer-title">{t.explore}</h2>
             <ul>
               <li><a href={`/${locale}#maison`}>{n.house}</a></li>
               <li><a href={`/${locale}#sejour`}>{n.stay}</a></li>
               <li><a href={`/${locale}#reserver`}>{n.book}</a></li>
+              <li><a href={`/${locale}/informations-legales`}>{t.legal}</a></li>
             </ul>
           </div>
           <div>
-            <h4>{t.contact}</h4>
+            <h2 className="footer-title">{t.contact}</h2>
             <ul>
               <li><a href={`mailto:${SITE.email}`}>{SITE.email}</a></li>
               {SITE.whatsapp && (
-                <li><a href={`https://wa.me/${SITE.whatsapp}`} target="_blank" rel="noopener">WhatsApp</a></li>
+                <li><a href={`https://wa.me/${SITE.whatsapp}`} target="_blank" rel="noopener noreferrer">WhatsApp</a></li>
               )}
               {SITE.instagram && (
-                <li><a href={`https://instagram.com/${SITE.instagram}`} target="_blank" rel="noopener">Instagram</a></li>
+                <li><a href={`https://instagram.com/${SITE.instagram}`} target="_blank" rel="noopener noreferrer">Instagram</a></li>
               )}
             </ul>
           </div>

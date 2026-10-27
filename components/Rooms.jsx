@@ -69,7 +69,7 @@ export default function Rooms({ locale }) {
                 progress={scrollYProgress}
                 native={native}
                 hidden={open === i}
-                label={`${t.view} : ${r.t}`}
+                label={`${t.view} : ${r.t}, ${PHOTOS[r.img].length} photos`}
                 count={PHOTOS[r.img].length}
                 onOpen={() => setOpen(i)}
               />
@@ -122,6 +122,7 @@ function Lightbox({ room, t, onClose }) {
   const [i, setI] = useState(0);
   const [dir, setDir] = useState(1);
   const closeBtn = useRef(null);
+  const box = useRef(null);
 
   const go = useCallback(
     (d) => {
@@ -140,6 +141,19 @@ function Lightbox({ room, t, onClose }) {
       if (e.key === "Escape") onClose();
       if (e.key === "ArrowRight") go(1);
       if (e.key === "ArrowLeft") go(-1);
+      // Le focus reste dans la visionneuse
+      if (e.key === "Tab" && box.current) {
+        const items = [...box.current.querySelectorAll("button")];
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => {
@@ -151,7 +165,7 @@ function Lightbox({ room, t, onClose }) {
   }, [go, onClose]);
 
   return (
-    <motion.div className="lightbox" role="dialog" aria-modal="true" aria-label={room.t}>
+    <motion.div className="lightbox" role="dialog" aria-modal="true" aria-label={room.t} ref={box}>
       <motion.div
         className="lightbox-bg"
         onClick={onClose}
