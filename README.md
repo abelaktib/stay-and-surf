@@ -1,148 +1,53 @@
-# Stay & Surf — Oualidia
+# Stay & Surf, Dar Nejma (Oualidia)
 
-Site Next.js 15 · Tailwind · Framer Motion · déploiement Vercel.
+Site de réservation directe des séjours surf à Dar Nejma. Next.js 16, FR et EN, paiement Stripe, synchronisation des calendriers Airbnb et Booking. Aucune base de données : les réservations du site sont lues directement dans Stripe.
 
-Remplace le site WordPress par quelque chose de plus rapide, plus beau, et
-synchronisé en temps réel avec les dispos Booking + Airbnb via iCal.
-
----
-
-## 🚀 Démarrage rapide
+## Lancer en local
 
 ```bash
-# 1. Installer les dépendances
 npm install
-
-# 2. (optionnel) Configurer les flux iCal
-cp .env.local.example .env.local
-# éditer .env.local avec tes URLs Booking & Airbnb
-
-# 3. Lancer en local
-npm run dev
+cp .env.example .env.local   # puis remplir les valeurs
+npm run dev                  # http://localhost:3000
 ```
 
-Ouvre http://localhost:3000
+## Ce qu'il faut régler
 
-**Sans configuration iCal**, le calendrier utilise les vraies dispos extraites
-du fichier iCal Booking fourni (fallback intégré). Tu peux déjà tester tout le
-site tel quel.
+| Quoi | Où |
+| --- | --- |
+| Prix, saisons, durée minimum, acompte | `lib/config.js` |
+| Textes FR et EN (compris dans le séjour, FAQ, annulation…) | `lib/i18n.js` |
+| Photos | `public/photos/` (remplacer le fichier en gardant le même nom) |
+| Photo du héros (vague) | `HERO_IMG` dans `components/Hero.jsx` |
 
----
+Pour convertir de nouvelles photos brutes : `npm run photos -- /chemin/vers/dossier/` (voir `scripts/photos.mjs`).
 
-## 📅 Brancher la synchro iCal (production)
+## Mise en ligne sur Vercel
 
-### 1 · Récupérer ton flux iCal **Booking**
+Dans Vercel, Project > Settings > Environment Variables, ajouter :
 
-1. Connecte-toi à l'**Extranet Booking**
-2. Va dans `Calendrier` → `Tarifs et disponibilité` → `Synchroniser les calendriers`
-3. Clique sur `Exporter le calendrier`
-4. Copie l'URL `.ics` (elle commence par `https://admin.booking.com/hotel/hoteladmin/ical.html?...`)
+- `NEXT_PUBLIC_SITE_URL` : `https://stayandsurf.com`
+- `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_WHATSAPP`, `NEXT_PUBLIC_INSTAGRAM`
+- `STRIPE_SECRET_KEY` : clé `sk_test_...` pour tester, puis `sk_live_...`
+- `AIRBNB_ICAL_URL` et `BOOKING_ICAL_URL`
 
-### 2 · Récupérer ton flux iCal **Airbnb**
+Redéployer après chaque changement de variable.
 
-1. Connecte-toi à ton **Dashboard hôte Airbnb**
-2. Sélectionne l'annonce → `Calendrier`
-3. Paramètres → `Synchronisation de calendrier` → `Exporter le calendrier`
-4. Copie l'URL (finit par `.ics`)
+## Synchronisation des calendriers (dans les deux sens)
 
-### 3 · Les coller dans `.env.local`
+1. **Airbnb et Booking vers le site** : copier l'URL d'export iCal de chaque plateforme dans `AIRBNB_ICAL_URL` et `BOOKING_ICAL_URL`. Le site relit ces flux toutes les 10 minutes. Tant qu'aucune URL n'est renseignée, le calendrier affiche des dates de démonstration.
+2. **Le site vers Airbnb et Booking** : importer `https://stayandsurf.com/api/calendar.ics` dans Airbnb (Calendrier > Disponibilités > Connecter un calendrier) et dans Booking (Calendrier > Synchroniser les calendriers > Importer). Chaque réservation payée sur le site y apparaît et bloque les dates.
 
-```env
-BOOKING_ICAL_URL=https://admin.booking.com/hotel/hoteladmin/ical.html?t=XXXX
-AIRBNB_ICAL_URL=https://www.airbnb.com/calendar/ical/XXXXXXXX.ics?s=XXXXX
-```
+Une demande de paiement en cours bloque les dates 31 minutes pour éviter qu'un deuxième client paie les mêmes nuits.
 
-Relance `npm run dev`. L'API `/api/availability` fusionnera automatiquement les
-deux flux et mettra à jour le calendrier du site toutes les 30 minutes.
+## Tester un paiement
 
----
+Avec la clé de test Stripe, utiliser la carte `4242 4242 4242 4242`, une date future et n'importe quel code. La réservation apparaît dans Stripe (Paiements) et sur `/api/calendar.ics`.
 
-## 🔗 Deep-links Booking / Airbnb
+## Pages et routes
 
-Quand un visiteur sélectionne des dates + voyageurs puis clique sur
-"Réserver sur Booking" ou "Réserver sur Airbnb", il est redirigé vers la
-plateforme avec les paramètres **déjà pré-remplis** :
-
-- **Booking** : `?checkin=2026-06-15&checkout=2026-06-22&group_adults=2`
-- **Airbnb** : `?check_in=2026-06-15&check_out=2026-06-22&adults=2`
-
-Les URLs des annonces se configurent en haut de `app/page.jsx` :
-
-```js
-const BOOKING_URL = "https://www.booking.com/hotel/ma/darnejma-oualidia.fr.html";
-const AIRBNB_URL  = "https://www.airbnb.fr/rooms/XXXXXXXX"; // ← à remplacer
-```
-
----
-
-## ☁️ Déploiement Vercel (3 min, gratuit)
-
-1. `git init && git add . && git commit -m "init"`
-2. Crée un repo sur **github.com** et push
-3. Va sur [vercel.com](https://vercel.com) → `Import Project` → sélectionne le repo
-4. Dans les **Environment Variables**, ajoute :
-   - `BOOKING_ICAL_URL`
-   - `AIRBNB_ICAL_URL`
-5. `Deploy` — c'est fini. URL type `stay-and-surf.vercel.app`
-
-Pour brancher `stayandsurf.com` : dans Vercel → `Settings` → `Domains` →
-ajouter le domaine. Il donnera les DNS à pointer.
-
----
-
-## 🗂️ Structure
-
-```
-stay-and-surf/
-├── app/
-│   ├── layout.jsx              # Metadata SEO
-│   ├── page.jsx                # Landing page complète
-│   ├── globals.css             # Fonts, variables CSS, utilitaires
-│   └── api/
-│       └── availability/
-│           └── route.js        # Parser iCal + fallback
-├── public/                     # Images statiques (à ajouter)
-├── .env.local.example          # Template des variables
-├── next.config.mjs
-├── tailwind.config.js
-├── postcss.config.mjs
-└── package.json
-```
-
----
-
-## ✍️ Personnaliser
-
-### Palette couleurs
-Modifier les variables CSS dans `app/globals.css` :
-- `--ivory` : fond principal
-- `--ink` : texte principal & sections sombres
-- `--terracotta` : accent chaud
-- `--seafoam` : accent frais
-
-### Photos
-Les images sont définies dans l'objet `IMG` en haut de `app/page.jsx`. Pour les
-remplacer par tes propres photos :
-1. Les mettre dans `public/images/`
-2. Remplacer les URLs par `/images/ma-photo.jpg`
-
-**Recommandation forte** : fais faire un shoot pro de Dar Nejma. Tes photos
-WhatsApp actuelles ne rendent pas justice au lieu.
-
-### Textes
-Tout est dans `app/page.jsx`, chaque section est un composant séparé
-(`Hero`, `Manifesto`, `DarNejma`, etc.).
-
----
-
-## 🛠️ Prochaines améliorations possibles
-
-- [ ] Page détaillée `/dar-nejma` avec galerie complète
-- [ ] Blog `/blog` (articles MDX ou CMS headless type Sanity)
-- [ ] Formulaire de contact avec envoi email (Resend, 100 emails/jour gratuits)
-- [ ] Multilingue FR / EN (next-intl)
-- [ ] Channel manager (Smoobu ~15€/mois) pour réservations directes sans commission
-
----
-
-Construit avec soin, face à l'océan. 🌊
+- `/fr`, `/en` : le site
+- `/fr/merci` : confirmation après paiement
+- `/api/availability` : nuits indisponibles (JSON)
+- `/api/checkout` : crée le paiement Stripe après revérification du prix et des dates
+- `/api/calendar.ics` : export iCal des réservations du site
+- `/sitemap.xml`, `/robots.txt`
