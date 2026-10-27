@@ -4,7 +4,7 @@ import Hero from "@/components/Hero";
 import Intro from "@/components/Intro";
 import Rooms from "@/components/Rooms";
 import Night from "@/components/Night";
-import Booking from "@/components/Booking";
+import BookingSection from "@/components/BookingSection";
 import StickyBook from "@/components/StickyBook";
 import { HouseHead, Stay, Place, Faq, Footer } from "@/components/Sections";
 import { SITE } from "@/lib/config";
@@ -14,7 +14,7 @@ export default async function Home({ params }) {
   return (
     <Experience house={SITE.house}>
       <Header locale={locale} />
-      <main>
+      <main id="contenu" tabIndex={-1}>
         <Hero locale={locale} />
         <Intro locale={locale} />
         <HouseHead locale={locale} />
@@ -22,7 +22,7 @@ export default async function Home({ params }) {
         <Stay locale={locale} />
         <Place locale={locale} />
         <Night locale={locale} />
-        <Booking locale={locale} />
+        <BookingSection locale={locale} />
         <Faq locale={locale} />
       </main>
       <Footer locale={locale} />

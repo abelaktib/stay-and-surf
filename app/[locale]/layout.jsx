@@ -1,11 +1,15 @@
-import "@fontsource-variable/bricolage-grotesque/standard.css";
-import "@fontsource-variable/instrument-sans/standard.css";
+import { display, text } from "../fonts";
 import "../globals.css";
 import { notFound } from "next/navigation";
 import { LOCALES, getDict } from "@/lib/i18n";
 import { SITE, STAY } from "@/lib/config";
 
 export const dynamicParams = false;
+
+const INTRO_SCRIPT =
+  "try{var s=sessionStorage;if(s.getItem('dn-intro'))document.documentElement.classList.add('intro-seen');s.setItem('dn-intro','1')}catch(e){}";
+// JSON-LD sûr dans une balise <script> : on échappe les caractères qui pourraient la fermer
+const jsonLdString = (o) => JSON.stringify(o).replace(/</g, "\\u003c");
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
 }
@@ -83,9 +87,11 @@ export default async function RootLayout({ children, params }) {
   };
 
   return (
-    <html lang={locale}>
+    <html lang={locale} className={`${display.variable} ${text.variable}`} suppressHydrationWarning>
       <body>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        {/* Avant tout affichage : le voile d'ouverture ne se joue qu'une fois par session */}
+        <script dangerouslySetInnerHTML={{ __html: INTRO_SCRIPT }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }} />
         {children}
       </body>
     </html>

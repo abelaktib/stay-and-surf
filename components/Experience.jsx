@@ -1,103 +1,80 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion, useScroll, useSpring } from "motion/react";
-import Lenis from "lenis";
+import { useEffect } from "react";
+import { motion, useScroll, useSpring } from "motion/react";
 import Star from "./Star";
 
-const ReadyCtx = createContext(true);
-export const useReady = () => useContext(ReadyCtx);
-
 /**
- * Défilement fluide (Lenis) + voile d'ouverture avec l'étoile.
- * Le voile n'apparaît qu'à la première visite de la session.
+ * Enveloppe commune des pages :
+ * - voile d'ouverture avec l'étoile (CSS pur : il s'affiche et disparaît même sans JavaScript,
+ *   une seule fois par session grâce à la classe `intro-seen` posée par le script de la mise en page) ;
+ * - défilement fluide Lenis, chargé après coup et uniquement à la souris (le tactile garde son défilement natif) ;
+ * - barre de progression de lecture.
  */
 export default function Experience({ children, house, intro = true }) {
-  const reduce = useReducedMotion();
-  const [veil, setVeil] = useState(intro);
-  const [ready, setReady] = useState(!intro);
-
   useEffect(() => {
-    if (!intro) return;
-    let seen = false;
-    try {
-      seen = sessionStorage.getItem("dn-intro") === "1";
-      sessionStorage.setItem("dn-intro", "1");
-    } catch {}
-    if (seen || reduce) {
-      setVeil(false);
-      setReady(true);
-      return;
-    }
-    const t = setTimeout(() => setVeil(false), 1500);
-    return () => clearTimeout(t);
-  }, [intro, reduce]);
+    const fine = window.matchMedia("(pointer: fine)").matches;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!fine || reduce) return;
 
-  useEffect(() => {
-    if (reduce) return;
-    const lenis = new Lenis({ lerp: 0.09, wheelMultiplier: 1 });
-    window.__lenis = lenis;
+    let lenis;
     let id;
-    const raf = (t) => {
-      lenis.raf(t);
-      id = requestAnimationFrame(raf);
-    };
-    id = requestAnimationFrame(raf);
-    // Liens d'ancre : défilement fluide
+    let alive = true;
     const onClick = (e) => {
-      const a = e.target.closest('a[href*="#"]');
-      if (!a) return;
+      const a = e.target.closest?.('a[href*="#"]');
+      if (!a || !lenis || e.metaKey || e.ctrlKey || e.shiftKey) return;
       const url = new URL(a.href);
       if (url.pathname !== location.pathname || !url.hash) return;
-      const el = document.querySelector(url.hash);
+      const el = document.getElementById(decodeURIComponent(url.hash.slice(1)));
       if (!el) return;
       e.preventDefault();
-      lenis.scrollTo(el, { offset: -20, duration: 1.6 });
+      lenis.scrollTo(el, { offset: -20, duration: 1.4 });
       history.replaceState(null, "", url.hash);
+      // Accessibilité : le focus suit le défilement
+      el.setAttribute("tabindex", "-1");
+      el.focus({ preventScroll: true });
     };
-    document.addEventListener("click", onClick);
+    const start = () =>
+      import("lenis").then(({ default: Lenis }) => {
+        if (!alive) return;
+        lenis = new Lenis({ lerp: 0.1 });
+        window.__lenis = lenis;
+        const raf = (t) => {
+          lenis.raf(t);
+          id = requestAnimationFrame(raf);
+        };
+        id = requestAnimationFrame(raf);
+        document.addEventListener("click", onClick);
+      });
+    const idle = window.requestIdleCallback ? requestIdleCallback(start, { timeout: 2000 }) : setTimeout(start, 600);
+
     return () => {
+      alive = false;
+      window.cancelIdleCallback ? cancelIdleCallback(idle) : clearTimeout(idle);
       cancelAnimationFrame(id);
       document.removeEventListener("click", onClick);
-      lenis.destroy();
+      lenis?.destroy();
       window.__lenis = undefined;
     };
-  }, [reduce]);
+  }, []);
 
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 200, damping: 40, restDelta: 0.001 });
 
   return (
-    <ReadyCtx.Provider value={ready}>
+    <>
       <motion.div className="read-progress" style={{ scaleX: progress }} aria-hidden="true" />
       {children}
-      <AnimatePresence onExitComplete={() => setReady(true)}>
-        {veil && (
-          <motion.div
-            className="intro-veil"
-            initial={{ y: 0 }}
-            exit={{ y: "-100%", transition: { duration: 0.9, ease: [0.76, 0, 0.24, 1] } }}
-          >
-            <div>
-              <motion.div
-                initial={{ rotate: -90, scale: 0.6, opacity: 0 }}
-                animate={{ rotate: 0, scale: 1, opacity: 1 }}
-                transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                style={{ display: "flex", justifyContent: "center" }}
-              >
-                <Star />
-              </motion.div>
-              <motion.p
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.45, duration: 0.7 }}
-              >
-                {house}
-              </motion.p>
+      {intro && (
+        <div className="intro-veil" aria-hidden="true">
+          <div>
+            <div className="intro-veil-star">
+              <Star />
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </ReadyCtx.Provider>
+            <p translate="no">{house}</p>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
