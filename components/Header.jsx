@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { usePathname } from "next/navigation";
 import Star from "./Star";
 import { getDict } from "@/lib/i18n";
 
@@ -61,6 +62,9 @@ export default function Header({ locale, solid = false }) {
     ["#questions", t.faq],
   ];
   const other = locale === "fr" ? "en" : "fr";
+  // Le changement de langue garde la page en cours (ex. /fr/surf-oualidia ↔ /en/surf-oualidia)
+  const pathname = usePathname() || `/${locale}`;
+  const inLang = (l) => pathname.replace(/^\/(fr|en)(?=\/|$)/, `/${l}`);
 
   return (
     <>
@@ -83,10 +87,10 @@ export default function Header({ locale, solid = false }) {
               </a>
             ))}
             <div className="lang" role="group" aria-label={t.lang}>
-              <a href="/fr" aria-current={locale === "fr" ? "page" : undefined} hrefLang="fr" lang="fr">
+              <a href={inLang("fr")} aria-current={locale === "fr" ? "page" : undefined} hrefLang="fr" lang="fr">
                 FR
               </a>
-              <a href="/en" aria-current={locale === "en" ? "page" : undefined} hrefLang="en" lang="en">
+              <a href={inLang("en")} aria-current={locale === "en" ? "page" : undefined} hrefLang="en" lang="en">
                 EN
               </a>
             </div>
@@ -148,7 +152,7 @@ export default function Header({ locale, solid = false }) {
               <a href={`${base}#reserver`} className="btn" onClick={() => setOpen(false)}>
                 {t.book}
               </a>
-              <a href={`/${other}`} hrefLang={other} lang={other} className="menu-lang">
+              <a href={inLang(other)} hrefLang={other} lang={other} className="menu-lang">
                 {other.toUpperCase()}
               </a>
             </div>

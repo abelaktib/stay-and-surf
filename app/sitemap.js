@@ -11,5 +11,5 @@ export default function sitemap() {
       priority: l === "fr" ? priority : Math.round(priority * 90) / 100,
       alternates: { languages: { fr: `${SITE.url}/fr${path}`, en: `${SITE.url}/en${path}`, "x-default": `${SITE.url}/fr${path}` } },
     }));
-  return [...page("", 1, "weekly"), ...page("/informations-legales", 0.3, "yearly")];
+  return [...page("", 1, "weekly"), ...page("/surf-oualidia", 0.8, "monthly"), ...page("/informations-legales", 0.3, "yearly")];
 }

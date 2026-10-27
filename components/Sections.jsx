@@ -96,6 +96,9 @@ export function Place({ locale }) {
               </li>
             ))}
           </ul>
+          <a className="text-link" href={`/${locale}/surf-oualidia`}>
+            {t.guide}
+          </a>
         </div>
         <div className="place-img tall" style={{ position: "relative" }}>
           <Image
@@ -164,6 +167,7 @@ export function Footer({ locale }) {
             <ul>
               <li><a href={`/${locale}#maison`}>{n.house}</a></li>
               <li><a href={`/${locale}#sejour`}>{n.stay}</a></li>
+              <li><a href={`/${locale}/surf-oualidia`}>{t.guide}</a></li>
               <li><a href={`/${locale}#reserver`}>{n.book}</a></li>
               <li><a href={`/${locale}/informations-legales`}>{t.legal}</a></li>
             </ul>
