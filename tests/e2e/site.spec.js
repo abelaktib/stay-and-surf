@@ -33,8 +33,8 @@ test.describe("Pages et navigation", () => {
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/en$/);
     await expect(page.locator('link[hreflang="fr"]')).toHaveCount(1);
-    const ld = JSON.parse(await page.locator('script[type="application/ld+json"]').textContent());
-    expect(ld["@type"]).toBe("VacationRental");
+    const blocks = (await page.locator('script[type="application/ld+json"]').allTextContents()).map((t) => JSON.parse(t));
+    expect(blocks.some((b) => b["@type"] === "VacationRental")).toBe(true);
     await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /og\.jpg/);
   });
 
@@ -238,7 +238,7 @@ test.describe("Réservation", () => {
 });
 
 test.describe("Accessibilité (axe-core, WCAG 2.2 AA)", () => {
-  for (const path of ["/fr", "/en", "/fr/informations-legales", "/fr/inconnue"]) {
+  for (const path of ["/fr", "/en", "/fr/informations-legales", "/fr/inconnue", "/fr/surf-oualidia", "/en/surf-oualidia"]) {
     test(`aucune violation sur ${path}`, async ({ page }) => {
       await prepare(page, { blocked: ["2026-11-20"] });
       await page.goto(path);

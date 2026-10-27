@@ -8,11 +8,14 @@ import BookingSection from "@/components/BookingSection";
 import StickyBook from "@/components/StickyBook";
 import { HouseHead, Stay, Place, Faq, Footer } from "@/components/Sections";
 import { SITE } from "@/lib/config";
+import { rentalLd } from "@/lib/seo";
+import JsonLd from "@/components/JsonLd";
 
 export default async function Home({ params }) {
   const { locale } = await params;
   return (
     <Experience house={SITE.house}>
+      <JsonLd data={rentalLd(locale)} />
       <Header locale={locale} />
       <main id="contenu" tabIndex={-1}>
         <Hero locale={locale} />

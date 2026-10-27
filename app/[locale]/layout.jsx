@@ -2,14 +2,14 @@ import { display, text } from "../fonts";
 import "../globals.css";
 import { notFound } from "next/navigation";
 import { LOCALES, getDict } from "@/lib/i18n";
-import { SITE, STAY } from "@/lib/config";
+import { SITE } from "@/lib/config";
+import { siteGraph } from "@/lib/seo";
+import JsonLd from "@/components/JsonLd";
 
 export const dynamicParams = false;
 
 const INTRO_SCRIPT =
   "try{var s=sessionStorage;if(s.getItem('dn-intro'))document.documentElement.classList.add('intro-seen');s.setItem('dn-intro','1')}catch(e){}";
-// JSON-LD sûr dans une balise <script> : on échappe les caractères qui pourraient la fermer
-const jsonLdString = (o) => JSON.stringify(o).replace(/</g, "\\u003c");
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
 }
@@ -48,50 +48,12 @@ export async function generateMetadata({ params }) {
 export default async function RootLayout({ children, params }) {
   const { locale } = await params;
   if (!LOCALES.includes(locale)) notFound();
-  const t = getDict(locale);
-
-  // Données structurées : location de vacances + offre de séjour
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "VacationRental",
-    name: `${SITE.house}, ${SITE.name}`,
-    description: t.meta.description,
-    url: `${SITE.url}/${locale}`,
-    image: [`${SITE.url}/og.jpg`, `${SITE.url}/photos/salon.webp`, `${SITE.url}/photos/rooftop-jour.webp`],
-    address: {
-      "@type": "PostalAddress",
-      addressLocality: SITE.address.locality,
-      addressRegion: SITE.address.region,
-      addressCountry: SITE.address.country,
-    },
-    geo: { "@type": "GeoCoordinates", latitude: SITE.geo.lat, longitude: SITE.geo.lng },
-    containsPlace: {
-      "@type": "Accommodation",
-      additionalType: "EntirePlace",
-      occupancy: { "@type": "QuantitativeValue", value: STAY.maxGuests },
-      numberOfBedrooms: 2,
-      amenityFeature: [
-        { "@type": "LocationFeatureSpecification", name: locale === "fr" ? "Toit-terrasse" : "Rooftop terrace", value: true },
-        { "@type": "LocationFeatureSpecification", name: locale === "fr" ? "Cuisine équipée" : "Kitchen", value: true },
-        { "@type": "LocationFeatureSpecification", name: "Wifi", value: true },
-      ],
-    },
-    makesOffer: {
-      "@type": "Offer",
-      name: t.stay.title,
-      price: STAY.weeklyPricePerPerson,
-      priceCurrency: "EUR",
-      description: t.stay.unit,
-    },
-    inLanguage: locale,
-  };
-
   return (
     <html lang={locale} className={`${display.variable} ${text.variable}`} suppressHydrationWarning>
       <body>
         {/* Avant tout affichage : le voile d'ouverture ne se joue qu'une fois par session */}
         <script dangerouslySetInnerHTML={{ __html: INTRO_SCRIPT }} />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }} />
+        <JsonLd data={siteGraph()} />
         {children}
       </body>
     </html>

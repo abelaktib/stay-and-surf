@@ -1,18 +1,13 @@
 import PageShell from "@/components/PageShell";
 import { legalContent } from "@/lib/legal";
+import JsonLd from "@/components/JsonLd";
 import { SITE } from "@/lib/config";
+import { breadcrumbLd, pageMeta } from "@/lib/seo";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const c = legalContent(locale);
-  return {
-    title: `${c.title} | ${SITE.name}`,
-    description: c.description,
-    alternates: {
-      canonical: `/${locale}/informations-legales`,
-      languages: { fr: "/fr/informations-legales", en: "/en/informations-legales" },
-    },
-  };
+  return pageMeta({ locale, path: "/informations-legales", title: `${c.title} | ${SITE.name}`, description: c.description });
 }
 
 export default async function Legal({ params }) {
@@ -20,6 +15,7 @@ export default async function Legal({ params }) {
   const c = legalContent(locale);
   return (
     <PageShell locale={locale} className="page page-legal">
+      <JsonLd data={breadcrumbLd([[locale === "fr" ? "Accueil" : "Home", `/${locale}`], [c.title, `/${locale}/informations-legales`]])} />
       <div className="wrap legal">
         <h1 className="h2">{c.title}</h1>
         <p className="legal-updated">{c.updated}</p>
